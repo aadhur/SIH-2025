@@ -4,9 +4,13 @@ import traceback
 import random
 import copy
 import datetime
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 from ortools.sat.python import cp_model
+
+@app.route('/')
+def index():
+    return render_template('index.html')
 
 # --- SETUP ---
 app = Flask(__name__)
@@ -948,6 +952,3 @@ def generate_feasible_solution_with_cp(subjects_list, teachers_list, classes_lis
     else:
         return None
 
-
-if __name__ == "__main__":
-    app.run(debug=True, port=5001)
