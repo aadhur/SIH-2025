@@ -1,0 +1,5 @@
+Flask==3.0.3
+ortools==9.8.3296
+requests==2.31.0
+google-api-python-client
+gunicorn

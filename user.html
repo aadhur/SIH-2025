@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Faculty Timetable Viewer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {--primary:#6366f1;--secondary:#8b5cf6;--accent:#ec4899;--dark:#0f172a;--darker:#0b1120;--light:#f1f5f9;--glass:rgba(30,41,59,0.7);--glass-border:rgba(255,255,255,0.1);}
+        body{font-family:'Poppins',sans-serif;background:linear-gradient(135deg,var(--darker),#1e293b);color:var(--light);min-height:100vh;overflow-x:hidden;position:relative}
+        .background-animation{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;overflow:hidden}
+        .floating-shape{position:absolute;border-radius:50%;background:linear-gradient(45deg,var(--primary),var(--secondary));opacity:0.1;filter:blur(40px);animation:float 15s infinite linear}
+        .shape-1{width:300px;height:300px;top:10%;left:5%;animation-duration:20s}
+        .shape-2{width:200px;height:200px;bottom:15%;right:10%;animation-duration:25s;animation-direction:reverse}
+        .shape-3{width:150px;height:150px;top:40%;right:20%;animation-duration:18s}
+         @keyframes float{0%{transform:translate(0,0) rotate(0deg)}25%{transform:translate(20px,30px) rotate(90deg)}50%{transform:translate(0,60px) rotate(180deg)}75%{transform:translate(-20px,30px) rotate(270deg)}100%{transform:translate(0,0) rotate(360deg)}}
+        .glass-card{background:var(--glass);backdrop-filter:blur(12px);border:1px solid var(--glass-border);border-radius:20px;box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);transform-style:preserve-3d;perspective:1000px;transition:all .5s cubic-bezier(.175,.885,.32,1.275)}
+        .glass-card:hover{transform:translateY(-10px) rotateX(5deg);box-shadow:0 35px 60px -15px rgba(0,0,0,0.6)}
+        .form-input,select,textarea{background-color:rgba(15,23,42,0.5);border:1px solid var(--glass-border);color:var(--light);border-radius:12px;padding:1rem;transition:all .3s ease}
+        .form-input:focus,select:focus,textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(99,102,241,0.3)}
+        .btn{display:inline-flex;align-items:center;justify-content:center;font-weight:600;border-radius:12px;transition:all .3s ease;padding:.75rem 1.25rem;cursor:pointer;position:relative;overflow:hidden;z-index:1}
+        .btn-primary{background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff}
+        .btn-primary::before{content:'';position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,var(--secondary),var(--accent));z-index:-1;opacity:0;transition:opacity .3s ease}
+        .btn-primary:hover{transform:translateY(-3px);box-shadow:0 10px 25px -5px rgba(99,102,241,0.4)}
+        .btn-primary:hover::before{opacity:1}
+        .btn-secondary{background:linear-gradient(135deg,#334155,#1e293b);color:#fff;border:1px solid #475569}
+        .btn-secondary:hover{background:linear-gradient(135deg,#1e293b,#0f172a);border-color:#64748b;transform:translateY(-3px)}
+        .btn-view.active, .tab-active { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; box-shadow: 0 5px 15px rgba(99, 102, 241, 0.4); }
+        .timetable-cell{padding:.75rem;border:1px solid #334155;vertical-align:top;min-height:100px;background-color:rgba(30,41,59,0.7);transition:all .2s ease;border-radius:8px;transform-style:preserve-3d;perspective:1000px}
+        .timetable-cell:hover{background-color:rgba(56,73,101,0.5);transform:translateY(-5px);box-shadow:0 10px 20px -5px rgba(0,0,0,0.3)}
+        .break-cell{font-weight:700;color:#94a3b8;vertical-align:middle;text-align:center;background-color:#1e293b;border-radius:8px}
+        .message-box{background:var(--glass);backdrop-filter:blur(10px);border:1px solid var(--glass-border);border-radius:20px;box-shadow:0 15px 30px -10px rgba(0,0,0,0.4);transform-style:preserve-3d;perspective:1000px;transition:all .5s cubic-bezier(.175,.885,.32,1.275)}
+        .message-box:hover{transform:translateY(-5px) rotateX(3deg);box-shadow:0 20px 35px -12px rgba(0,0,0,0.5)}
+        .header-divider{position:relative;padding-bottom:1.5rem}
+        .header-divider::after{content:'';position:absolute;bottom:0;left:0;width:100px;height:4px;background:linear-gradient(to right,var(--primary),var(--accent));border-radius:2px}
+        .selector-container{position:relative}
+        .selector-container::after{content:'\f078';font-family:'Font Awesome 6 Free';font-weight:900;position:absolute;right:1rem;top:50%;transform:translateY(-50%);color:var(--primary);pointer-events:none}
+        .particles{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1}
+        .particle{position:absolute;border-radius:50%;background:var(--primary);opacity:.5;animation:particle-float 15s infinite linear}
+        @keyframes particle-float{0%{transform:translateY(0) translateX(0);opacity:0}10%{opacity:.5}90%{opacity:.3}100%{transform:translateY(-100vh) translateX(100px);opacity:0}}
+        .logo{display:flex;align-items:center;justify-content:center;margin-bottom:1.5rem}
+        .logo-icon{font-size:2.5rem;background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;margin-right:.75rem}
+        .logo-text{font-size:1.75rem;font-weight:700;background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+        .notification{position:fixed;top:20px;right:20px;padding:1rem 1.5rem;border-radius:12px;background:var(--glass);backdrop-filter:blur(10px);border:1px solid var(--glass-border);box-shadow:0 10px 25px -5px rgba(0,0,0,0.3);transform:translateX(150%);transition:transform .5s ease;z-index:1000}
+        .notification.show{transform:translateX(0)}
+        .notification.success{border-left:4px solid var(--primary)}
+        .notification.error{border-left:4px solid var(--accent)}
+        .subject-tag{display:inline-block;padding:.25rem .75rem;border-radius:20px;font-size:.75rem;font-weight:600;margin-bottom:.5rem}
+        .tag-theory{background:rgba(67,97,238,0.2);color:#93aaff}
+        .tag-lab{background:rgba(245,158,11,0.2);color:#fcd34d}
+        .tag-special{background:rgba(16,185,129,0.2);color:#6de9c0}
+        .tag-elective{background:rgba(139,92,246,0.2);color:#d8b4fe}
+    </style>
+</head>
+<body class="text-gray-200">
+    <div class="background-animation">
+        <div class="floating-shape shape-1"></div><div class="floating-shape shape-2"></div>
+        <div class="floating-shape shape-3"></div><div class="particles" id="particles"></div>
+    </div>
+    <div id="notification" class="notification"><span id="notification-message"></span></div>
+
+    <div id="login-screen" class="min-h-screen flex items-center justify-center px-4">
+        <div class="glass-card p-8 rounded-xl shadow-2xl w-full max-w-md">
+            <div class="logo text-center mb-6"><i class="fas fa-chalkboard-teacher logo-icon text-5xl"></i></div>
+            <header class="text-center mb-8">
+                <h1 class="text-3xl font-bold text-white">Faculty Login</h1>
+                <p class="text-md text-gray-400 mt-2">Select your name to view your schedule</p>
+            </header>
+            <form id="faculty-login-form" class="space-y-6">
+                <div>
+                    <label class="block text-sm font-medium mb-2">Faculty Name</label>
+                    <div class="relative selector-container">
+                        <i class="fas fa-user absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500"></i>
+                        <select id="faculty-name-selector" class="form-input w-full pl-10" required>
+                            <option value="">-- Select Your Name --</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Password</label>
+                    <div class="relative">
+                        <i class="fas fa-lock absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500"></i>
+                        <input type="password" id="faculty-password" class="form-input w-full pl-10" value="123" readonly>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2">Default password is <span class="font-mono">123</span></p>
+                </div>
+                <button type="submit" class="w-full btn-primary font-bold py-3 px-4 rounded-lg">
+                    <i class="fas fa-sign-in-alt mr-2"></i> View My Schedule
+                </button>
+                 <div class="text-center mt-4">
+                    <button id="back-to-main" type="button" class="text-indigo-400 hover:text-indigo-300">
+                        <i class="fas fa-arrow-left mr-1"></i> Back to Main Login
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="dashboard-screen" class="container mx-auto p-4 md:p-8 hidden">
+        <header class="flex flex-col md:flex-row justify-between items-center text-center mb-10 gap-6">
+            <div class="logo">
+                <i class="fas fa-calendar-alt logo-icon"></i>
+                <span class="logo-text">Faculty Portal</span>
+            </div>
+            <div class="flex-grow">
+                <h1 class="text-3xl md:text-4xl font-bold text-white">Department Timetable</h1>
+                <p class="text-gray-400 mt-2">View your schedule and manage requests</p>
+            </div>
+            <button id="logout-btn" class="btn btn-secondary text-white font-bold py-2 px-4 rounded">
+                <i class="fas fa-sign-out-alt mr-2"></i>Logout
+            </button>
+        </header>
+        <main id="main-content">
+            <div class="glass-card p-6 mb-8">
+                <div class="flex flex-wrap items-center justify-between border-b-2 border-indigo-500 pb-4 mb-6 gap-4">
+                    <h2 class="text-2xl md:text-3xl font-semibold text-indigo-400 header-divider">View Schedule</h2>
+                    <div id="timetable-controls" class="flex flex-wrap items-center gap-4 controls-container"></div>
+                </div>
+                <div class="overflow-x-auto bg-gray-900/30 p-4 rounded-xl" id="timetable-container">
+                    <table class="w-full border-collapse text-center table-auto">
+                        <thead id="timetable-head"></thead>
+                        <tbody id="timetable-body"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div id="messaging-section" class="hidden">
+                <h3 class="text-2xl font-semibold text-indigo-400 mb-4 header-divider">Request Slot Change</h3>
+                <div class="message-box p-6 rounded-xl">
+                    <div class="mb-6">
+                        <h4 class="font-bold text-lg mb-2">Admin's Reply:</h4>
+                        <div class="p-4 bg-gray-800/50 rounded-lg">
+                            <p id="admin-reply-text" class="text-gray-300 italic">No reply yet. New requests clear previous replies.</p>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block mb-2 text-sm font-medium text-gray-300">Your Request Message</label>
+                        <textarea id="request-message" class="form-input w-full p-3 rounded-lg" rows="4" placeholder="e.g., 'Request to move Tuesday P3 to Friday P5 due to an appointment.'"></textarea>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <button id="send-request-btn" class="btn btn-primary text-white font-bold py-3 px-6 rounded-lg">
+                            <i class="fas fa-paper-plane mr-2"></i>Send Request
+                        </button>
+                        <p id="request-status" class="text-sm text-green-400 h-6"></p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+document.addEventListener('DOMContentLoaded', () => {
+    const mainContent = document.getElementById('main-content');
+    const timetableControls = document.getElementById('timetable-controls');
+    const timetableHead = document.getElementById('timetable-head');
+    const timetableBody = document.getElementById('timetable-body');
+    const logoutBtn = document.getElementById('logout-btn');
+    const messagingSection = document.getElementById('messaging-section');
+    const sendRequestBtn = document.getElementById('send-request-btn');
+    const requestMessageInput = document.getElementById('request-message');
+    const adminReplyText = document.getElementById('admin-reply-text');
+    const loginScreen = document.getElementById('login-screen');
+    const dashboardScreen = document.getElementById('dashboard-screen');
+    const facultyLoginForm = document.getElementById('faculty-login-form');
+    const facultyNameSelector = document.getElementById('faculty-name-selector');
+    const backToMain = document.getElementById('back-to-main');
+    const notification = document.getElementById('notification');
+    const notificationMessage = document.getElementById('notification-message');
+
+    const API_URL = 'http://127.0.0.1:5001';
+    let appState = null;
+    let messageCheckInterval = null;
+
+    createParticles();
+
+    try {
+        const storedState = localStorage.getItem('timetableGeneratorState');
+        if (storedState) appState = JSON.parse(storedState);
+    } catch (error) {
+        console.error("Failed to parse data from localStorage:", error);
+        appState = null;
+    }
+
+    if (!appState || !appState.teachers || appState.teachers.length === 0) {
+        loginScreen.innerHTML = `<div class="glass-card p-12 text-center rounded-2xl"><div class="text-5xl text-indigo-400 mb-6"><i class="fas fa-calendar-times"></i></div><h2 class="text-3xl font-bold text-white mb-4">No Data Available</h2><p class="text-gray-400 mb-8">An administrator must set up faculty data first.</p><button onclick="window.location.href='index.html'" class="btn btn-secondary font-bold py-3 px-6 rounded-lg"><i class="fas fa-sign-out-alt mr-2"></i>Return to Login</button></div>`;
+    } else {
+        // CORRECTED: Added fallback `|| []` to prevent error if teachers array is missing
+        facultyNameSelector.innerHTML = '<option value="">-- Select Your Name --</option>' + 
+            (appState.teachers || []).map(t => `<option value="${t.name}">${t.name}</option>`).join('');
+
+        const loggedInFaculty = localStorage.getItem('loggedInFaculty');
+        if (loggedInFaculty) {
+            showDashboard(loggedInFaculty);
+        }
+    }
+
+    facultyLoginForm.addEventListener('submit', handleFacultyLogin);
+    backToMain.addEventListener('click', () => { window.location.href = 'index.html'; });
+    logoutBtn.addEventListener('click', handleLogout);
+
+    function handleFacultyLogin(e) {
+        e.preventDefault();
+        const facultyName = facultyNameSelector.value;
+        const password = document.getElementById('faculty-password').value;
+        if (!facultyName) return showNotification("Please select your name.", "error");
+        if (password !== "123") return showNotification("Incorrect password. Default is 123.", "error");
+        localStorage.setItem('loggedInFaculty', facultyName);
+        showDashboard(facultyName);
+    }
+
+    function showDashboard(facultyName) {
+    loginScreen.classList.add('hidden');
+    dashboardScreen.classList.remove('hidden');
+    
+    // CORRECTED: This check is now more robust. It also checks if the data array is empty.
+    if (!appState || !appState.fullTimetableData || appState.fullTimetableData.length === 0) {
+        mainContent.innerHTML = `
+            <div class="glass-card p-12 text-center rounded-2xl">
+                <div class="text-5xl text-indigo-400 mb-6"><i class="fas fa-calendar-times"></i></div>
+                <h2 class="text-3xl font-bold text-white mb-4">No Timetable Generated</h2>
+                <p class="text-gray-400">Please go to the admin panel and generate a timetable first.</p>
+            </div>`;
+        return;
+    }
+
+    setupControls(facultyName);
+    renderTimetable('teacher', facultyName);
+}
+
+    function handleLogout() {
+        localStorage.removeItem('loggedInFaculty');
+        clearInterval(messageCheckInterval);
+        window.location.reload(); // Reload to show login screen
+    }
+
+    function renderTimetable(viewType, selectedValue) {
+        clearInterval(messageCheckInterval);
+        messagingSection.classList.add('hidden');
+        
+        const { fullTimetableData, daySlots, timeslots, subjects } = appState;
+        const days = (daySlots && daySlots.length > 0) ? daySlots.map(d => d.name) : ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+        const periods = (timeslots && timeslots.length > 0) ? timeslots.map((t, i) => i + 1) : [1, 2, 3, 4, 5, 6, 7];
+        const periodTimings = {};
+        (timeslots || []).forEach((t, i) => periodTimings[i + 1] = `${t.startTime}-${t.endTime}`);
+
+        const hCell = c => `<th class="p-3 border border-gray-700 align-middle bg-gray-800 rounded-lg">${c}</th>`;
+        timetableHead.innerHTML = `<tr>${hCell('Day/Period')}${periods.map(p => hCell(`<div class="text-xs text-gray-400 font-normal">${periodTimings[p] || `P${p}`}</div><div class="text-lg font-bold">P${p}</div>`)).join('')}</tr>`;
+
+        if (!selectedValue) {
+            timetableBody.innerHTML = `<tr><td colspan="${periods.length + 1}" class="p-12 text-center text-gray-500">Select an item to view timetable</td></tr>`;
+            return;
+        }
+
+        if (viewType === 'teacher') {
+            messagingSection.classList.remove('hidden');
+            checkForMessages(selectedValue);
+            messageCheckInterval = setInterval(() => checkForMessages(selectedValue), 5000);
+        }
+
+        const filterKey = viewType === 'class' ? 'class_id' : 'teacher_name';
+        timetableBody.innerHTML = days.map(day => {
+            const dayRow = periods.map(period => {
+                const entry = (fullTimetableData || []).find(e => e.day === day && e.period === period && e[filterKey] === selectedValue);
+                if (entry) {
+                    const subject = (subjects || []).find(s => s.shortName === entry.subject_id);
+                    let tagClass = 'tag-theory';
+                    if (subject) {
+                        if (subject.isLab) tagClass = 'tag-lab';
+                        else if (subject.isElective) tagClass = 'tag-elective';
+                    }
+                    const displayLine = viewType === 'class' ? `<div class="text-sm text-gray-300 mt-1">${entry.teacher_name}</div>` : `<div class="text-sm text-gray-300 mt-1">${entry.class_id}</div>`;
+                    return `<td class="timetable-cell"><div class="subject-tag ${tagClass}">${entry.subject_id}</div>${displayLine}<div class="text-xs text-gray-400 mt-2">@ ${entry.room_id}</div></td>`;
+                }
+                return `<td class="timetable-cell"></td>`;
+            }).join('');
+            return `<tr><td class="font-bold p-3 border border-gray-700 bg-gray-800 rounded-lg">${day}</td>${dayRow}</tr>`;
+        }).join('');
+    };
+
+    function setupControls(currentTeacher) {
+        // CORRECTED: Added fallback `|| []` to prevent error if classes array is missing
+        timetableControls.innerHTML = `
+            <div class="flex rounded-xl shadow-lg overflow-hidden">
+                <button id="view-teacher-btn" class="btn btn-view rounded-l-xl px-5 py-3 text-sm active">My Schedule</button>
+                <button id="view-class-btn" class="btn btn-view rounded-r-xl px-5 py-3 text-sm">Class View</button>
+            </div>
+            <div id="class-selector-div" class="hidden selector-container">
+                <select id="class-selector" class="form-input p-3 text-sm rounded-xl w-48">
+                    ${(appState.classes || []).map(c => `<option value="${c.name}">${c.name}</option>`).join('')}
+                </select>
+            </div>`;
+
+        const classBtn = document.getElementById('view-class-btn');
+        const teacherBtn = document.getElementById('view-teacher-btn');
+        const classDiv = document.getElementById('class-selector-div');
+        const classSelector = document.getElementById('class-selector');
+
+        classBtn.addEventListener('click', () => {
+            classBtn.classList.add('active'); teacherBtn.classList.remove('active');
+            classDiv.classList.remove('hidden');
+            renderTimetable('class', classSelector.value);
+        });
+        teacherBtn.addEventListener('click', () => {
+            teacherBtn.classList.add('active'); classBtn.classList.remove('active');
+            classDiv.classList.add('hidden');
+            renderTimetable('teacher', currentTeacher);
+        });
+        classSelector.addEventListener('change', (e) => renderTimetable('class', e.target.value));
+        sendRequestBtn.addEventListener('click', async () => {
+            const message = requestMessageInput.value.trim();
+            if (!message) return showNotification("Please type a message.", "error");
+            try {
+                const response = await fetch(`${API_URL}/send_request`, {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ teacher_name: currentTeacher, message: message })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    showNotification("Request sent successfully!", "success");
+                    requestMessageInput.value = '';
+                    adminReplyText.textContent = 'No reply yet. Your new request will clear previous replies.';
+                    adminReplyText.className = "text-gray-300 italic";
+                } else { showNotification(`Error: ${result.error}`, "error"); }
+            } catch (err) { showNotification("Failed to connect to server.", "error"); }
+        });
+    };
+
+    async function checkForMessages(teacherName) {
+        if (!teacherName) return;
+        try {
+            const response = await fetch(`${API_URL}/get_my_messages/${encodeURIComponent(teacherName)}`);
+            if (!response.ok) return;
+            const data = await response.json();
+            if (data && data.reply) {
+                adminReplyText.textContent = data.reply;
+                adminReplyText.className = "text-green-300";
+            } else {
+                adminReplyText.textContent = 'No reply yet. Your new request will clear previous replies.';
+                adminReplyText.className = "text-gray-300 italic";
+            }
+        } catch (error) { console.error('Failed to fetch messages:', error); }
+    }
+
+    function createParticles() {
+        const container = document.getElementById('particles'), count = 30;
+        if (!container) return;
+        for (let i = 0; i < count; i++) {
+            const p = document.createElement('div'); p.classList.add('particle');
+            const size = Math.random() * 10 + 2; p.style.width = `${size}px`; p.style.height = `${size}px`;
+            p.style.left = `${Math.random() * 100}%`; p.style.top = `${Math.random() * 100}%`;
+            const delay = Math.random() * 15; const duration = 15 + Math.random() * 10;
+            p.style.animationDelay = `${delay}s`; p.style.animationDuration = `${duration}s`;
+            container.appendChild(p);
+        }
+    }
+    
+    function showNotification(message, type) {
+        notificationMessage.textContent = message;
+        notification.className = `notification ${type} show`;
+        setTimeout(() => notification.classList.remove('show'), 3000);
+    }
+});
+    </script>
+</body>
+</html>

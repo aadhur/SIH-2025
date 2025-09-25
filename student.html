@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #8b5cf6;
+            --accent: #ec4899;
+            --dark: #0f172a;
+            --darker: #0b1120;
+            --light: #f1f5f9;
+            --glass: rgba(30, 41, 59, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, var(--darker), #1e293b);
+            color: var(--light);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+        
+        .background-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+        
+        .floating-shape {
+            position: absolute;
+            border-radius: 50%;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            opacity: 0.1;
+            filter: blur(40px);
+            animation: float 15s infinite linear;
+        }
+        
+        .shape-1 { width: 300px; height: 300px; top: 10%; left: 5%; animation-duration: 20s; }
+        .shape-2 { width: 200px; height: 200px; bottom: 15%; right: 10%; animation-duration: 25s; animation-direction: reverse; }
+        .shape-3 { width: 150px; height: 150px; top: 40%; right: 20%; animation-duration: 18s; }
+        
+        @keyframes float {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(20px, 30px) rotate(90deg); }
+            50% { transform: translate(0, 60px) rotate(180deg); }
+            75% { transform: translate(-20px, 30px) rotate(270deg); }
+            100% { transform: translate(0, 0) rotate(360deg); }
+        }
+        
+        .glass-card {
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            transform-style: preserve-3d;
+            perspective: 1000px;
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        .glass-card:hover {
+            transform: translateY(-10px) rotateX(5deg);
+            box-shadow: 0 35px 60px -15px rgba(0, 0, 0, 0.6);
+        }
+        
+        .form-input, select, textarea {
+            background-color: rgba(15, 23, 42, 0.5);
+            border: 1px solid var(--glass-border);
+            color: var(--light);
+            border-radius: 12px;
+            padding: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .form-input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            padding: 0.75rem 1.25rem;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+        }
+        
+        .btn-primary::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, var(--secondary), var(--accent));
+            z-index: -1; opacity: 0; transition: opacity 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.4);
+        }
+        
+        .btn-primary:hover::before { opacity: 1; }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #334155, #1e293b);
+            color: white;
+            border: 1px solid #475569;
+        }
+        
+        .btn-secondary:hover {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            border-color: #64748b;
+            transform: translateY(-3px);
+        }
+        
+        .timetable-cell {
+            padding: 0.75rem; border: 1px solid #334155; vertical-align: top;
+            min-height: 100px; background-color: rgba(30, 41, 59, 0.7);
+            transition: all 0.2s ease; border-radius: 8px;
+            transform-style: preserve-3d; perspective: 1000px;
+        }
+        
+        .timetable-cell:hover {
+            background-color: rgba(56, 73, 101, 0.5); transform: translateY(-5px);
+            box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.3);
+        }
+        
+        .break-cell {
+            font-weight: bold; color: #94a3b8; vertical-align: middle;
+            text-align: center; background-color: #1e293b; border-radius: 8px;
+        }
+        
+        .header-divider { position: relative; padding-bottom: 1.5rem; }
+        .header-divider::after {
+            content: ''; position: absolute; bottom: 0; left: 0;
+            width: 100px; height: 4px;
+            background: linear-gradient(to right, var(--primary), var(--accent));
+            border-radius: 2px;
+        }
+        
+        .logo { display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem; }
+        .logo-icon {
+            font-size: 2.5rem; background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text; background-clip: text;
+            -webkit-text-fill-color: transparent; margin-right: 0.75rem;
+        }
+        .logo-text {
+            font-size: 1.75rem; font-weight: 700;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text; background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .notification {
+            position: fixed; top: 20px; right: 20px;
+            padding: 1rem 1.5rem; border-radius: 12px;
+            background: var(--glass); backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            transform: translateX(150%); transition: transform 0.5s ease;
+            z-index: 1000;
+        }
+        .notification.show { transform: translateX(0); }
+        .notification.success { border-left: 4px solid var(--primary); }
+        .notification.error { border-left: 4px solid var(--accent); }
+        
+        .subject-tag {
+            display: inline-block; padding: 0.25rem 0.75rem; border-radius: 20px;
+            font-size: 0.75rem; font-weight: 600; margin-bottom: 0.5rem;
+        }
+        
+        .tag-theory { background: rgba(67, 97, 238, 0.2); color: #93aaff; }
+        .tag-lab { background: rgba(245, 158, 11, 0.2); color: #fcd34d; }
+        .tag-elective { background: rgba(139, 92, 246, 0.2); color: #d8b4fe; }
+        
+        .student-info-card {
+            background: linear-gradient(145deg, #1e293b, #0f172a);
+            border: 1px solid #334155; border-radius: 16px;
+            padding: 1.5rem; margin-bottom: 1.5rem;
+        }
+        
+        .profile-img {
+            width: 60px; height: 60px; border-radius: 50%;
+            object-fit: cover; border: 2px solid var(--primary);
+            background: linear-gradient(45deg, #6366f1, #8b5cf6);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem; color: white;
+        }
+
+        .tab-button {
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            border-bottom: 3px solid transparent;
+            color: #94a3b8;
+            transition: all 0.3s ease;
+        }
+        .tab-button.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .progress-bar-bg {
+            background-color: #334155;
+            border-radius: 9999px;
+            height: 8px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            height: 100%;
+            border-radius: 9999px;
+            transition: width 0.5s ease;
+        }
+        .achievement-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem;
+            background-color: rgba(15, 23, 42, 0.5);
+            border-radius: 12px;
+            border: 1px solid var(--glass-border);
+        }
+        .achievement-icon {
+            font-size: 1.5rem;
+            color: #fcd34d;
+        }
+        .file-upload-btn {
+            background-color: rgba(15, 23, 42, 0.5);
+            border: 1px dashed #475569;
+            color: #94a3b8;
+            cursor: pointer;
+        }
+        .file-upload-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        @media (max-width: 768px) {
+            .timetable-cell { padding: 0.5rem; min-height: 80px; }
+        }
+    </style>
+</head>
+<body class="text-gray-200">
+    <div class="background-animation">
+        <div class="floating-shape shape-1"></div>
+        <div class="floating-shape shape-2"></div>
+        <div class="floating-shape shape-3"></div>
+    </div>
+
+    <div id="notification" class="notification">
+        <span id="notification-message"></span>
+    </div>
+
+    <div id="login-screen" class="min-h-screen flex items-center justify-center px-4">
+        <div class="glass-card p-8 rounded-xl shadow-2xl w-full max-w-md">
+            <div class="logo text-center mb-6">
+                <i class="fas fa-user-graduate logo-icon text-5xl"></i>
+            </div>
+            
+            <header class="text-center mb-8">
+                <h1 class="text-3xl font-bold text-white">Student Login</h1>
+                <p class="text-md text-gray-400 mt-2">Enter your Student ID to view your portal</p>
+            </header>
+            
+            <form id="student-login-form" class="space-y-6">
+                <div>
+                    <label class="block text-sm font-medium mb-2">Student ID</label>
+                    <div class="relative">
+                        <i class="fas fa-id-card absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500"></i>
+                        <input type="text" id="student-id-input" class="form-input w-full pl-10" placeholder="e.g., STU23CS101" required>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2">Password</label>
+                    <div class="relative">
+                        <i class="fas fa-lock absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500"></i>
+                        <input type="password" id="student-password" class="form-input w-full pl-10" value="123" readonly>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2">Default password is <span class="font-mono">123</span></p>
+                </div>
+                
+                <button type="submit" class="w-full btn-primary font-bold py-3 px-4 rounded-lg">
+                    <i class="fas fa-sign-in-alt mr-2"></i> View Portal
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div id="dashboard-screen" class="container mx-auto p-4 md:p-8 hidden">
+        <header class="flex flex-col md:flex-row justify-between items-center text-center mb-10 gap-6">
+            <div class="logo">
+                <i class="fas fa-calendar-alt logo-icon"></i>
+                <span class="logo-text">Student Portal</span>
+            </div>
+            <div class="flex-grow">
+                <h1 class="text-3xl md:text-4xl font-bold text-white" id="dashboard-title">My Personalized Timetable</h1>
+                <p class="text-gray-400 mt-2" id="dashboard-subtitle">Your academic and extracurricular hub</p>
+            </div>
+            <button id="logout-btn" class="btn btn-secondary text-white font-bold py-2 px-4 rounded">
+                <i class="fas fa-sign-out-alt mr-2"></i>Logout
+            </button>
+        </header>
+
+        <main id="main-content">
+            <div class="student-info-card mb-6">
+                <div class="flex flex-wrap items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <div class="profile-img" id="profile-initial">AS</div>
+                        <div>
+                            <h2 class="text-2xl font-bold text-indigo-400" id="student-name">Student Name</h2>
+                            <p class="text-gray-400" id="student-id-display">Student ID: STU000</p>
+                            <p class="text-gray-400" id="student-program">Program: B.Sc. (Honours)</p>
+                        </div>
+                    </div>
+                    <div class="mt-4 md:mt-0">
+                        <button id="download-btn" class="btn btn-primary text-white font-bold py-2 px-4 rounded">
+                            <i class="fas fa-download mr-2"></i>Download Profile PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-6 border-b border-gray-700">
+                <nav class="flex space-x-4" aria-label="Tabs">
+                    <button id="tab-timetable" class="tab-button active">
+                        <i class="fas fa-table-list mr-2"></i>Timetable
+                    </button>
+                    <button id="tab-profile" class="tab-button">
+                        <i class="fas fa-user-circle mr-2"></i>Academic Profile
+                    </button>
+                </nav>
+            </div>
+
+            <div id="content-timetable" class="tab-content active">
+                <div class="glass-card p-6 mb-8">
+                    <div class="flex flex-wrap items-center justify-between border-b-2 border-indigo-500 pb-4 mb-6 gap-4">
+                        <h2 class="text-2xl md:text-3xl font-semibold text-indigo-400 header-divider">Weekly Schedule</h2>
+                    </div>
+                    <div class="overflow-x-auto bg-gray-900/30 p-4 rounded-xl" id="timetable-container">
+                        <table class="w-full border-collapse text-center table-auto">
+                            <thead id="timetable-head"></thead>
+                            <tbody id="timetable-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="content-profile" class="tab-content">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 space-y-6">
+                        <div class="glass-card p-6">
+                            <h3 class="text-xl font-semibold text-indigo-400 mb-4 header-divider">Credit Summary</h3>
+                            <div class="space-y-4" id="credit-summary"></div>
+                        </div>
+                        <div class="glass-card p-6">
+                            <h3 class="text-xl font-semibold text-indigo-400 mb-4 header-divider">Course Breakdown</h3>
+                            <div class="space-y-4" id="course-breakdown"></div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-6">
+                        <div class="glass-card p-6">
+                            <h3 class="text-xl font-semibold text-indigo-400 mb-4 header-divider">Achievements & Certifications</h3>
+                            <div class="space-y-3" id="achievements-list"></div>
+                            <div class="mt-6">
+                                <h4 class="font-semibold mb-2">Upload New Certificate</h4>
+                                <div class="flex flex-col gap-3">
+                                    <label for="cert-upload" class="btn btn-secondary file-upload-btn text-center">
+                                        <i class="fas fa-upload mr-2"></i> Choose File
+                                    </label>
+                                    <input type="file" id="cert-upload" class="hidden">
+                                    <span id="file-name" class="text-sm text-gray-400">No file selected</span>
+                                    <button id="upload-cert-btn" class="btn btn-primary">Submit for Verification</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="glass-card p-6">
+                            <h3 class="text-xl font-semibold text-indigo-400 mb-4 header-divider">4th Year: Research Track</h3>
+                            <div class="space-y-2 text-gray-300" id="future-plans"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // This object provides the detailed academic profile data.
+        // The timetable and elective choices will ONLY come from the admin tool's localStorage data.
+        const studentAcademicDatabase = {
+            "SRIT24281006": {
+                name: "Akshay Srinivas",
+                id: "SRIT24281006",
+                program: "3rd Year B.Sc. (Honours) in Computer Science",
+                university: "Sri Ramakrishna Institute of Technology, Coimbatore",
+                cgpa: 8.8,
+                totalCredits: 136,
+                creditsBreakdown: {
+                    "Major (Computer Science)": { earned: 72, total: 80 },
+                    "Minor (Design & Innovation)": { earned: 16, total: 16 },
+                    "Multidisciplinary": { earned: 12, total: 12 },
+                    "Skill Enhancement (SEC)": { earned: 12, total: 12 },
+                    "Ability Enhancement (AEC)": { earned: 8, total: 8 },
+                    "Value-Added (VAC)": { earned: 8, total: 8 },
+                    "Internships": { earned: 8, total: 8 }
+                },
+                courses: {
+                    "Major": ["Data Structures & Algorithms", "Object-Oriented Programming", "Database Management Systems", "Operating Systems", "Computer Networks", "Artificial Intelligence", "Machine Learning"],
+                    "Minor": ["Introduction to UX/UI Design", "Design Thinking", "Human-Computer Interaction", "Digital Prototyping"],
+                    "Multidisciplinary": ["Introduction to Psychology", "Environmental Science", "Basics of Financial Markets"],
+                    "SEC": ["Web Development (Full Stack)", "Cloud Computing with AWS", "Mobile App Development", "Digital Marketing Analytics"],
+                    "AEC": ["Advanced Technical Communication", "German Language (A1 Level)"],
+                    "VAC": ["Indian Knowledge Systems", "Ethical Hacking & Cybersecurity", "Leadership & Team Management"]
+                },
+                achievements: [
+                    { icon: "fa-trophy", text: "Winner, Smart India Hackathon 2025" },
+                    { icon: "fa-code", text: "Finalist, Google Code Jam (India)" },
+                    { icon: "fa-robot", text: "Top 5, National AI for Good Conclave" },
+                    { icon: "fa-cloud", text: "AWS Certified Cloud Practitioner" },
+                    { icon: "fa-drafting-compass", text: "Google Certified in UX Design" },
+                    { icon: "fa-user-secret", text: "Certified Ethical Hacker (CEH) v11" },
+                    { icon: "fa-file-alt", text: "Published Paper: ML for Crop Yields" },
+                    { icon: "fa-hands-helping", text: "Volunteer, Code for a Cause" }
+                ],
+                futurePlans: {
+                    title: "Approved for B.Sc. (Honours with Research)",
+                    project: "Developing a Lightweight Neural Network for Real-Time Anomaly Detection in IoT Networks."
+                }
+                // NO timetable or electiveChoices here. They will be pulled from localStorage.
+            }
+        };
+
+        let appState = null;
+
+        const loginScreen = document.getElementById('login-screen');
+        const dashboardScreen = document.getElementById('dashboard-screen');
+        const studentLoginForm = document.getElementById('student-login-form');
+        const logoutBtn = document.getElementById('logout-btn');
+        const downloadBtn = document.getElementById('download-btn');
+        const studentNameEl = document.getElementById('student-name');
+        const studentIdDisplay = document.getElementById('student-id-display');
+        const studentProgramEl = document.getElementById('student-program');
+        const profileInitial = document.getElementById('profile-initial');
+        const timetableHead = document.getElementById('timetable-head');
+        const timetableBody = document.getElementById('timetable-body');
+        const notification = document.getElementById('notification');
+        const notificationMessage = document.getElementById('notification-message');
+        const tabTimetable = document.getElementById('tab-timetable');
+        const tabProfile = document.getElementById('tab-profile');
+        const contentTimetable = document.getElementById('content-timetable');
+        const contentProfile = document.getElementById('content-profile');
+        const creditSummaryEl = document.getElementById('credit-summary');
+        const courseBreakdownEl = document.getElementById('course-breakdown');
+        const achievementsListEl = document.getElementById('achievements-list');
+        const futurePlansEl = document.getElementById('future-plans');
+        const certUploadInput = document.getElementById('cert-upload');
+        const fileNameEl = document.getElementById('file-name');
+        const uploadCertBtn = document.getElementById('upload-cert-btn');
+        
+        studentLoginForm.addEventListener('submit', handleStudentLogin);
+        logoutBtn.addEventListener('click', handleLogout);
+        downloadBtn.addEventListener('click', handleDownload);
+        tabTimetable.addEventListener('click', () => switchTab('timetable'));
+        tabProfile.addEventListener('click', () => switchTab('profile'));
+        certUploadInput.addEventListener('change', () => {
+            fileNameEl.textContent = certUploadInput.files.length > 0 ? certUploadInput.files[0].name : "No file selected";
+        });
+        uploadCertBtn.addEventListener('click', handleCertUpload);
+        
+        function handleStudentLogin(e) {
+            e.preventDefault();
+            const studentId = document.getElementById('student-id-input').value.trim().toUpperCase();
+            const password = document.getElementById('student-password').value;
+            
+            if (!studentId) return showNotification("Please enter your Student ID", "error");
+            if (password !== "123") return showNotification("Incorrect password. Default is 123", "error");
+            
+            authenticateStudent(studentId);
+        }
+
+        function authenticateStudent(studentId) {
+            let studentData = null;
+            
+            try {
+                const storedState = localStorage.getItem('timetableGeneratorState');
+                if (storedState) {
+                    appState = JSON.parse(storedState);
+                    studentData = (appState.students || []).find(s => s.id.toUpperCase() === studentId);
+                }
+            } catch (error) {
+                console.error("Failed to parse data from localStorage:", error);
+                return showNotification("Error reading data from admin tool.", "error");
+            }
+
+            if (!studentData) {
+                return showNotification("Student ID not found. Please ask admin to add your ID.", "error");
+            }
+
+            // Merge academic profile data if available
+            const academicProfile = studentAcademicDatabase[studentId];
+            if (academicProfile) {
+                studentData = { ...academicProfile, ...studentData };
+            }
+            
+            // Attach timetable generated by admin
+            if (appState && appState.fullTimetableData) {
+                 studentData.timetable = appState.fullTimetableData.filter(entry => 
+                    entry.class_id === studentData.class
+                );
+            } else {
+                 studentData.timetable = []; 
+            }
+
+            showDashboard(studentData);
+            showNotification("Welcome, " + studentData.name + "!", "success");
+        }
+        
+        function showDashboard(studentData) {
+            loginScreen.classList.add('hidden');
+            dashboardScreen.classList.remove('hidden');
+            
+            studentNameEl.textContent = studentData.name;
+            studentIdDisplay.textContent = `Student ID: ${studentData.id}`;
+            studentProgramEl.textContent = studentData.program ? `Program: ${studentData.program}` : `Class: ${studentData.class}`;
+            
+            const initials = (studentData.name || '').split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+            profileInitial.textContent = initials;
+            
+            renderTimetable(studentData);
+            populateProfile(studentData);
+        }
+
+        function switchTab(tabName) {
+            const tabs = { timetable: tabTimetable, profile: tabProfile };
+            const contents = { timetable: contentTimetable, profile: contentProfile };
+            Object.values(tabs).forEach(tab => tab.classList.remove('active'));
+            Object.values(contents).forEach(content => content.classList.remove('active'));
+            tabs[tabName].classList.add('active');
+            contents[tabName].classList.add('active');
+        }
+
+        function populateProfile(studentData) {
+            if (!studentData.creditsBreakdown) {
+                contentProfile.innerHTML = `<div class="p-6 text-center text-gray-400">No detailed academic profile available for this student.</div>`;
+                return;
+            }
+            
+            creditSummaryEl.innerHTML = Object.entries(studentData.creditsBreakdown).map(([category, data]) => {
+                const percentage = (data.earned / data.total) * 100;
+                return `
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-sm font-medium text-gray-300">${category}</span>
+                            <span class="text-sm font-bold text-indigo-300">${data.earned} / ${data.total} Credits</span>
+                        </div>
+                        <div class="progress-bar-bg"><div class="progress-bar" style="width: ${percentage}%;"></div></div>
+                    </div>`;
+            }).join('') + `
+                <div class="text-right mt-4 text-lg font-bold">
+                    Total Earned: <span class="text-green-400">${studentData.totalCredits}</span> | CGPA: <span class="text-yellow-400">${studentData.cgpa}/10.0</span>
+                </div>`;
+            
+            courseBreakdownEl.innerHTML = Object.entries(studentData.courses).map(([category, courseList]) => `
+                <div>
+                    <h4 class="font-semibold text-indigo-300 mb-2">${category} Courses</h4>
+                    <p class="text-sm text-gray-400">${courseList.join(', ')}</p>
+                </div>`).join('');
+
+            achievementsListEl.innerHTML = studentData.achievements.map(item => `
+                <div class="achievement-item">
+                    <i class="fas ${item.icon} achievement-icon"></i>
+                    <span>${item.text}</span>
+                </div>`).join('');
+            
+            futurePlansEl.innerHTML = `
+                <p><strong class="text-green-400">Status:</strong> ${studentData.futurePlans.title}</p>
+                <p class="mt-2"><strong class="text-green-400">Project:</strong> ${studentData.futurePlans.project}</p>
+            `;
+        }
+
+        function renderTimetable(studentData) {
+            const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+            const periods = [1, 2, 'Break', 3, 4, 'Lunch', 5, 6, 7];
+            const periodTimings = { 1: '9:00-9:55', 2: '9:55-10:50', 3: '11:10-12:05', 4: '12:05-1:00', 5: '2:00-2:55', 6: '2:55-3:50', 7: '3:50-4:45' };
+            
+            const hCell = c => `<th class="p-3 border border-gray-700 align-middle bg-gray-800 rounded-lg">${c}</th>`;
+            timetableHead.innerHTML = `<tr>${hCell('Day/Period')}${periods.map(p => typeof p === 'number' ? hCell(`<div class="text-xs text-gray-400 font-normal">${periodTimings[p]}</div><div class="text-lg font-bold">P${p}</div>`) : hCell(`<div class="text-lg font-bold">${p.toUpperCase()}</div>`)).join('')}</tr>`;
+            
+            if (!studentData.timetable || studentData.timetable.length === 0) {
+                 timetableBody.innerHTML = `<tr><td colspan="${periods.length + 1}" class="text-center p-8 text-gray-500">Timetable has not been generated by the admin yet.</td></tr>`;
+                 return;
+            }
+
+            timetableBody.innerHTML = days.map(day => {
+                const dayRow = periods.map(period => {
+                    if (typeof period === 'string') return `<td class="break-cell">${period.toUpperCase()}</td>`;
+                    const entry = (studentData.timetable || []).find(e => e.day === day && e.period === period);
+                    
+                    if (entry) {
+                        let subjectDisplay = entry.subject_id;
+                        let subjectName = entry.subject_name || subjectDisplay;
+                        let tagClass = entry.is_lab ? 'tag-lab' : 'tag-theory';
+
+                        if (entry.subject_id.includes('OE') && studentData.electiveChoices) {
+                            const chosenCourse = studentData.electiveChoices[entry.subject_id];
+                            if (chosenCourse) {
+                                subjectDisplay = chosenCourse.split(' - ')[0] || entry.subject_id;
+                                subjectName = chosenCourse;
+                            }
+                            tagClass = 'tag-elective';
+                        }
+                        
+                        return `<td class="timetable-cell"><div class="subject-tag ${tagClass}">${subjectDisplay}</div><div class="text-sm text-gray-300 mt-1">${subjectName}</div><div class="text-xs text-gray-400 mt-2">${entry.teacher_name}</div><div class="text-xs text-gray-400 mt-1">@ ${entry.room_id}</div></td>`;
+                    } else {
+                        return `<td class="timetable-cell"></td>`;
+                    }
+                }).join('');
+                return `<tr><td class="font-bold p-3 border border-gray-700 bg-gray-800 rounded-lg">${day}</td>${dayRow}</tr>`;
+            }).join('');
+        }
+
+        function handleLogout() {
+            loginScreen.classList.remove('hidden');
+            dashboardScreen.classList.add('hidden');
+            document.getElementById('student-id-input').value = '';
+            switchTab('timetable');
+        }
+
+        function handleCertUpload() {
+            if (certUploadInput.files.length === 0) {
+                return showNotification("Please choose a file to upload.", "error");
+            }
+            showNotification("File uploaded successfully. Admin will verify and add to your ABC profile.", "success");
+            certUploadInput.value = ''; 
+            fileNameEl.textContent = "No file selected";
+        }
+        
+        async function handleDownload() {
+            const activeTabContent = document.querySelector('.tab-content.active');
+            if (!activeTabContent) return;
+
+            showNotification("Preparing PDF...", "success");
+            try {
+                const canvas = await html2canvas(activeTabContent, { 
+                    scale: 2, 
+                    backgroundColor: '#0f172a',
+                    useCORS: true 
+                });
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jspdf.jsPDF({
+                    orientation: activeTabContent.id === 'content-profile' ? 'p' : 'l',
+                    unit: 'pt',
+                    format: 'a4'
+                });
+
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = pdf.internal.pageSize.getHeight();
+                const imgWidth = canvas.width;
+                const imgHeight = canvas.height;
+                const ratio = Math.min((pdfWidth - 40) / imgWidth, (pdfHeight - 40) / imgHeight);
+
+                const imgX = (pdfWidth - imgWidth * ratio) / 2;
+                const imgY = 20;
+
+                pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
+                pdf.save(`Portal-${studentIdDisplay.textContent.split(': ')[1]}.pdf`);
+                showNotification('PDF downloaded!', "success");
+            } catch (err) {
+                console.error(err);
+                showNotification('Failed to generate PDF.', "error");
+            }
+        }
+        
+        function showNotification(message, type) {
+            notificationMessage.textContent = message;
+            notification.className = `notification ${type} show`;
+            setTimeout(() => notification.classList.remove('show'), 3000);
+        }
+    });
+    </script>
+</body>
+</html>
