@@ -1,5 +1,5 @@
 Flask==3.0.3
-ortools==9.8.3296
+ortools==9.14.6206
 requests==2.31.0
 google-api-python-client
 gunicorn
