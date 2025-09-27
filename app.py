@@ -951,4 +951,3 @@ def generate_feasible_solution_with_cp(subjects_list, teachers_list, classes_lis
         return solution
     else:
         return None
-
